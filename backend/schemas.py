@@ -17,6 +17,16 @@ class SwitchCreate(BaseModel):
     location: Optional[str] = None
     tags: Optional[str] = ""
     notes: Optional[str] = None
+    # Connection type
+    connection_type: str = "ssh"  # "ssh" or "serial"
+    # Serial settings
+    serial_port: Optional[str] = None
+    serial_baud: int = 9600
+    serial_databits: int = 8
+    serial_parity: str = "N"
+    serial_stopbits: int = 1
+    serial_timeout: int = 10
+    serial_password: Optional[str] = None
 
 
 class SwitchUpdate(BaseModel):
@@ -31,6 +41,15 @@ class SwitchUpdate(BaseModel):
     tags: Optional[str] = None
     notes: Optional[str] = None
     status: Optional[str] = None
+    # Connection type
+    connection_type: Optional[str] = None
+    serial_port: Optional[str] = None
+    serial_baud: Optional[int] = None
+    serial_databits: Optional[int] = None
+    serial_parity: Optional[str] = None
+    serial_stopbits: Optional[int] = None
+    serial_timeout: Optional[int] = None
+    serial_password: Optional[str] = None
 
 
 class SwitchOut(BaseModel):
@@ -46,6 +65,13 @@ class SwitchOut(BaseModel):
     location: Optional[str] = None
     tags: Optional[str] = ""
     notes: Optional[str] = None
+    connection_type: str = "ssh"
+    serial_port: Optional[str] = None
+    serial_baud: int = 9600
+    serial_databits: int = 8
+    serial_parity: str = "N"
+    serial_stopbits: int = 1
+    serial_timeout: int = 10
     created_at: datetime
     updated_at: Optional[datetime] = None
 
@@ -219,3 +245,46 @@ class DashboardStats(BaseModel):
     open_security_findings: int = 0
     active_workflows: int = 0
     total_topologies: int = 0
+
+
+# ─── Config Templates ───
+
+class ConfigTemplateCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    description: Optional[str] = None
+    vendor: str = "cisco_ios"
+    category: str = "general"
+    template_body: str = Field(..., min_length=1)
+    variables: Optional[Any] = None
+    tags: Optional[str] = ""
+
+
+class ConfigTemplateUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    vendor: Optional[str] = None
+    category: Optional[str] = None
+    template_body: Optional[str] = None
+    variables: Optional[Any] = None
+    tags: Optional[str] = None
+
+
+class ConfigTemplateOut(BaseModel):
+    id: int
+    name: str
+    description: Optional[str] = None
+    vendor: str
+    category: str
+    template_body: str
+    variables: Optional[Any] = None
+    tags: Optional[str] = ""
+    is_builtin: bool = False
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    model_config = {"from_attributes": True}
+
+
+class TemplateApplyRequest(BaseModel):
+    template_id: int
+    variables: dict[str, str] = {}

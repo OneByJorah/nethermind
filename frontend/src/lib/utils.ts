@@ -52,6 +52,8 @@ export function vendorColor(vendor: string): string {
     case 'cisco_nxos': return 'text-sky-500';
     case 'juniper_junos': return 'text-lime-500';
     case 'arista_eos': return 'text-red-500';
+    case 'aruba_os':
+    case 'hp_procurve': return 'text-amber-500';
     case 'linux': return 'text-yellow-500';
     default: return 'text-gray-500';
   }

@@ -19,6 +19,7 @@ const navItems = [
   { label: 'Dashboard', href: '/', icon: LayoutDashboard },
   { label: 'Switches', href: '/switches', icon: Network },
   { label: 'Configs', href: '/configs', icon: FileText },
+  { label: 'Templates', href: '/templates', icon: FileText },
   { label: 'Hermes Chat', href: '/chat', icon: MessageSquare },
   { label: 'Workflows', href: '/workflows', icon: GitBranch },
   { label: 'Security', href: '/security', icon: Shield },

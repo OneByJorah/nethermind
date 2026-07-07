@@ -26,6 +26,8 @@ VENDOR_MAP = {
     "extreme": "extreme",
     "mikrotik": "mikrotik_routeros",
     "ubiquiti": "ubiquiti_edgeos",
+    "aruba_os": "hp_procurve",  # ArubaOS-Switch / ProVision
+    "hp_procurve": "hp_procurve",
 }
 
 
@@ -76,6 +78,26 @@ SHOW_COMMANDS = {
         "ip_route": "ip route show",
         "health": "top -bn1 | head -5",
         "memory": "free -m",
+    },
+    "aruba_os": {
+        "running_config": "show running-config",
+        "startup_config": "show startup-config",
+        "version": "show version",
+        "interfaces": "show interfaces brief",
+        "ip_route": "show ip route",
+        "vlan": "show vlan",
+        "arp": "show arp",
+        "mac": "show mac-address-table",
+        "health": "show system",
+        "memory": "show memory",
+        "logging": "show logging",
+        "environment": "show environment",
+        "inventory": "show inventory",
+        "trunk": "show trunk",
+        "lacp": "show lacp",
+        "spanning_tree": "show spanning-tree",
+        "poe": "show power-over-ethernet",
+        "lldp": "show lldp info remote-device",
     },
 }
 

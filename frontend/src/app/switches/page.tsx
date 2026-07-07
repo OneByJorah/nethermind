@@ -82,6 +82,7 @@ export default function SwitchesPage() {
                 <th>Hostname</th>
                 <th>IP Address</th>
                 <th>Vendor</th>
+                <th>Connection</th>
                 <th>Status</th>
                 <th>Location</th>
                 <th>Last Updated</th>
@@ -90,7 +91,7 @@ export default function SwitchesPage() {
             </thead>
             <tbody>
               {filtered.length === 0 ? (
-                <tr><td colSpan={7} className="text-center py-12 text-slate-500">No switches found</td></tr>
+                <tr><td colSpan={8} className="text-center py-12 text-slate-500">No switches found</td></tr>
               ) : filtered.map(sw => (
                 <tr key={sw.id}>
                   <td className="font-medium text-white">{sw.hostname}</td>
@@ -98,6 +99,13 @@ export default function SwitchesPage() {
                   <td>
                     <span className={`badge bg-slate-800 border-slate-700 ${vendorColor(sw.vendor)}`}>
                       {sw.vendor.replace('_', ' ').toUpperCase()}
+                    </span>
+                  </td>
+                  <td>
+                    <span className={`inline-flex items-center gap-1.5 text-sm ${
+                      sw.connection_type === 'serial' ? 'text-amber-400' : 'text-blue-400'
+                    }`}>
+                      {sw.connection_type === 'serial' ? '🔧 Serial' : '🔌 SSH'}
                     </span>
                   </td>
                   <td>
@@ -135,9 +143,23 @@ export default function SwitchesPage() {
 
 function AddSwitchModal({ onClose, onAdded }: { onClose: () => void; onAdded: () => void }) {
   const [form, setForm] = useState<SwitchCreateData>({
-    hostname: '', ip_address: '', vendor: 'cisco_ios', ssh_port: 22
+    hostname: '', ip_address: '', vendor: 'cisco_ios', ssh_port: 22,
+    connection_type: 'ssh', serial_baud: 9600, serial_databits: 8,
+    serial_parity: 'N', serial_stopbits: 1, serial_timeout: 10,
   })
   const [saving, setSaving] = useState(false)
+  const [serialPorts, setSerialPorts] = useState<any[]>([])
+
+  const loadSerialPorts = async () => {
+    try {
+      const ports = await switchesApi.serialPorts()
+      setSerialPorts(ports)
+    } catch { /* ignore */ }
+  }
+
+  useEffect(() => {
+    if (form.connection_type === 'serial') loadSerialPorts()
+  }, [form.connection_type])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -152,50 +174,165 @@ function AddSwitchModal({ onClose, onAdded }: { onClose: () => void; onAdded: ()
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="card w-full max-w-md mx-4" onClick={e => e.stopPropagation()}>
+      <div className="card w-full max-w-2xl mx-4" onClick={e => e.stopPropagation()}>
         <h2 className="text-lg font-semibold text-white mb-4">Add Switch</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="text-sm text-slate-400 mb-1 block">Hostname *</label>
-            <input className="input" required value={form.hostname}
-              onChange={e => setForm({...form, hostname: e.target.value})} />
-          </div>
-          <div>
-            <label className="text-sm text-slate-400 mb-1 block">IP Address *</label>
-            <input className="input" required value={form.ip_address}
-              onChange={e => setForm({...form, ip_address: e.target.value})} />
-          </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm text-slate-400 mb-1 block">Vendor</label>
-              <select className="input select" value={form.vendor}
-                onChange={e => setForm({...form, vendor: e.target.value})}>
-                <option value="cisco_ios">Cisco IOS</option>
-                <option value="cisco_xr">Cisco XR</option>
-                <option value="cisco_nxos">Cisco NX-OS</option>
-                <option value="juniper_junos">Juniper JunOS</option>
-                <option value="arista_eos">Arista EOS</option>
-                <option value="linux">Linux</option>
-              </select>
+              <label className="text-sm text-slate-400 mb-1 block">Hostname *</label>
+              <input className="input" required value={form.hostname}
+                onChange={e => setForm({...form, hostname: e.target.value})} />
             </div>
             <div>
-              <label className="text-sm text-slate-400 mb-1 block">SSH Port</label>
-              <input className="input" type="number" value={form.ssh_port}
-                onChange={e => setForm({...form, ssh_port: parseInt(e.target.value) || 22})} />
+              <label className="text-sm text-slate-400 mb-1 block">IP Address *</label>
+              <input className="input" required value={form.ip_address}
+                onChange={e => setForm({...form, ip_address: e.target.value})} />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm text-slate-400 mb-1 block">SSH Username</label>
-              <input className="input" value={form.ssh_username || ''}
-                onChange={e => setForm({...form, ssh_username: e.target.value})} />
-            </div>
-            <div>
-              <label className="text-sm text-slate-400 mb-1 block">SSH Password</label>
-              <input className="input" type="password" value={form.ssh_password || ''}
-                onChange={e => setForm({...form, ssh_password: e.target.value})} />
+
+          {/* Connection Type */}
+          <div>
+            <label className="text-sm text-slate-400 mb-1 block">Connection Type</label>
+            <div className="flex gap-3">
+              <label className={`flex-1 p-3 rounded-lg border cursor-pointer transition-all ${
+                form.connection_type === 'ssh'
+                  ? 'bg-blue-500/10 border-blue-500/30 text-blue-400'
+                  : 'bg-slate-800/50 border-slate-700/50 text-slate-400 hover:border-slate-600'
+              }`}>
+                <input type="radio" name="conn_type" value="ssh" className="sr-only"
+                  checked={form.connection_type === 'ssh'}
+                  onChange={() => setForm({...form, connection_type: 'ssh'})} />
+                <div className="text-center">
+                  <p className="font-medium">🔌 SSH</p>
+                  <p className="text-xs mt-1">Network connection</p>
+                </div>
+              </label>
+              <label className={`flex-1 p-3 rounded-lg border cursor-pointer transition-all ${
+                form.connection_type === 'serial'
+                  ? 'bg-amber-500/10 border-amber-500/30 text-amber-400'
+                  : 'bg-slate-800/50 border-slate-700/50 text-slate-400 hover:border-slate-600'
+              }`}>
+                <input type="radio" name="conn_type" value="serial" className="sr-only"
+                  checked={form.connection_type === 'serial'}
+                  onChange={() => setForm({...form, connection_type: 'serial'})} />
+                <div className="text-center">
+                  <p className="font-medium">🔧 Serial (COM)</p>
+                  <p className="text-xs mt-1">Console cable</p>
+                </div>
+              </label>
             </div>
           </div>
+
+          {/* SSH Fields */}
+          {form.connection_type === 'ssh' && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm text-slate-400 mb-1 block">SSH Port</label>
+                <input className="input" type="number" value={form.ssh_port}
+                  onChange={e => setForm({...form, ssh_port: parseInt(e.target.value) || 22})} />
+              </div>
+              <div>
+                <label className="text-sm text-slate-400 mb-1 block">Vendor</label>
+                <select className="input select" value={form.vendor}
+                  onChange={e => setForm({...form, vendor: e.target.value})}>
+                  <option value="cisco_ios">Cisco IOS</option>
+                  <option value="cisco_xr">Cisco XR</option>
+                  <option value="cisco_nxos">Cisco NX-OS</option>
+                  <option value="juniper_junos">Juniper JunOS</option>
+                  <option value="arista_eos">Arista EOS</option>
+                  <option value="aruba_os">HP Aruba (OS-Switch)</option>
+                  <option value="linux">Linux</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-sm text-slate-400 mb-1 block">SSH Username</label>
+                <input className="input" value={form.ssh_username || ''}
+                  onChange={e => setForm({...form, ssh_username: e.target.value})} />
+              </div>
+              <div>
+                <label className="text-sm text-slate-400 mb-1 block">SSH Password</label>
+                <input className="input" type="password" value={form.ssh_password || ''}
+                  onChange={e => setForm({...form, ssh_password: e.target.value})} />
+              </div>
+            </div>
+          )}
+
+          {/* Serial Fields */}
+          {form.connection_type === 'serial' && (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm text-slate-400 mb-1 block">Serial Port *</label>
+                  <div className="flex gap-2">
+                    <input className="input flex-1" placeholder="/dev/ttyUSB0" value={form.serial_port || ''}
+                      onChange={e => setForm({...form, serial_port: e.target.value})} />
+                    {serialPorts.length > 0 && (
+                      <select className="input select w-40" value={form.serial_port || ''}
+                        onChange={e => setForm({...form, serial_port: e.target.value})}>
+                        <option value="">Detected ports</option>
+                        {serialPorts.map(p => (
+                          <option key={p.device} value={p.device}>{p.device}</option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm text-slate-400 mb-1 block">Baud Rate</label>
+                  <select className="input select" value={form.serial_baud}
+                    onChange={e => setForm({...form, serial_baud: parseInt(e.target.value) || 9600})}>
+                    <option value="9600">9600</option>
+                    <option value="19200">19200</option>
+                    <option value="38400">38400</option>
+                    <option value="57600">57600</option>
+                    <option value="115200">115200</option>
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="text-sm text-slate-400 mb-1 block">Data Bits</label>
+                  <select className="input select" value={form.serial_databits}
+                    onChange={e => setForm({...form, serial_databits: parseInt(e.target.value) || 8})}>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm text-slate-400 mb-1 block">Parity</label>
+                  <select className="input select" value={form.serial_parity}
+                    onChange={e => setForm({...form, serial_parity: e.target.value})}>
+                    <option value="N">None</option>
+                    <option value="E">Even</option>
+                    <option value="O">Odd</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm text-slate-400 mb-1 block">Stop Bits</label>
+                  <select className="input select" value={form.serial_stopbits}
+                    onChange={e => setForm({...form, serial_stopbits: parseInt(e.target.value) || 1})}>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm text-slate-400 mb-1 block">Enable Password</label>
+                  <input className="input" type="password" value={form.serial_password || ''}
+                    onChange={e => setForm({...form, serial_password: e.target.value})} />
+                </div>
+                <div>
+                  <label className="text-sm text-slate-400 mb-1 block">Timeout (seconds)</label>
+                  <input className="input" type="number" value={form.serial_timeout}
+                    onChange={e => setForm({...form, serial_timeout: parseInt(e.target.value) || 10})} />
+                </div>
+              </div>
+            </>
+          )}
+
           <div>
             <label className="text-sm text-slate-400 mb-1 block">Location</label>
             <input className="input" value={form.location || ''}

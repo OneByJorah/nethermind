@@ -28,6 +28,16 @@ class Switch(Base):
     status = Column(String(20), default="unknown")  # unknown, online, offline, maintenance
     tags = Column(String(512), nullable=True, default="")
     notes = Column(Text, nullable=True)
+    # Connection type: "ssh" (default) or "serial"
+    connection_type = Column(String(10), default="ssh")
+    # Serial port settings (used when connection_type = "serial")
+    serial_port = Column(String(128), nullable=True)  # e.g. /dev/ttyUSB0, COM3
+    serial_baud = Column(Integer, default=9600)
+    serial_databits = Column(Integer, default=8)
+    serial_parity = Column(String(1), default="N")  # N, E, O
+    serial_stopbits = Column(Integer, default=1)
+    serial_timeout = Column(Integer, default=10)
+    serial_password = Column(String(256), nullable=True)  # enable password for serial
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
@@ -166,3 +176,20 @@ class DeviceMetric(Base):
     interfaces_up = Column(Integer, nullable=True)
     interfaces_down = Column(Integer, nullable=True)
     recorded_at = Column(DateTime, server_default=func.now())
+
+
+class ConfigTemplate(Base):
+    """Pre-configured configuration templates for network devices."""
+    __tablename__ = "config_templates"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    vendor = Column(String(50), default="cisco_ios")  # Target vendor
+    category = Column(String(50), default="general")  # vlan, security, stp, interface, ospf, bgp, general
+    template_body = Column(Text, nullable=False)  # Jinja2 template
+    variables = Column(JSON, nullable=True)  # JSON schema of expected variables
+    tags = Column(String(512), nullable=True, default="")
+    is_builtin = Column(Boolean, default=False)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())

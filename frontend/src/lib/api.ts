@@ -33,6 +33,13 @@ export interface SwitchData {
   location: string | null;
   tags: string | null;
   notes: string | null;
+  connection_type: string;
+  serial_port: string | null;
+  serial_baud: number;
+  serial_databits: number;
+  serial_parity: string;
+  serial_stopbits: number;
+  serial_timeout: number;
   created_at: string;
   updated_at: string | null;
 }
@@ -48,11 +55,24 @@ export interface SwitchCreateData {
   location?: string;
   tags?: string;
   notes?: string;
+  connection_type?: string;
+  serial_port?: string;
+  serial_baud?: number;
+  serial_databits?: number;
+  serial_parity?: string;
+  serial_stopbits?: number;
+  serial_timeout?: number;
+  serial_password?: string;
 }
 
 export const switchesApi = {
-  list: (status?: string) =>
-    request<SwitchData[]>(`/api/switches/${status ? `?status=${status}` : ''}`),
+  list: (status?: string, connectionType?: string) => {
+    const params = new URLSearchParams();
+    if (status) params.set('status', status);
+    if (connectionType) params.set('connection_type', connectionType);
+    const qs = params.toString();
+    return request<SwitchData[]>(`/api/switches/${qs ? `?${qs}` : ''}`);
+  },
   get: (id: number) => request<SwitchData>(`/api/switches/${id}`),
   create: (data: SwitchCreateData) =>
     request<SwitchData>('/api/switches/', { method: 'POST', body: JSON.stringify(data) }),
@@ -61,11 +81,20 @@ export const switchesApi = {
   delete: (id: number) =>
     request<{ message: string }>(`/api/switches/${id}`, { method: 'DELETE' }),
   sync: (id: number) =>
-    request<{ status: string; hostname: string }>(`/api/switches/${id}/sync`, { method: 'POST' }),
+    request<{ status: string; hostname: string; connection_type?: string }>(`/api/switches/${id}/sync`, { method: 'POST' }),
   health: (id: number) =>
     request<any>(`/api/switches/${id}/health`, { method: 'POST' }),
   commands: (id: number, commands: string[]) =>
     request<any>(`/api/switches/${id}/commands`, { method: 'POST', body: JSON.stringify(commands) }),
+  pushConfig: (id: number, commands: string[]) =>
+    request<any>(`/api/switches/${id}/push-config`, { method: 'POST', body: JSON.stringify(commands) }),
+  applyTemplate: (id: number, templateId: number, variables: Record<string, string> = {}) =>
+    request<any>(`/api/switches/${id}/apply-template`, {
+      method: 'POST',
+      body: JSON.stringify({ template_id: templateId, variables }),
+    }),
+  serialPorts: () =>
+    request<{ device: string; description: string; manufacturer: string }[]>('/api/switches/serial/ports'),
   bulkBackup: () =>
     request<{ status: string }>('/api/switches/bulk-backup', { method: 'POST' }),
 };
@@ -196,6 +225,60 @@ export const containerlabApi = {
     request<any>(`/api/containerlab/parse?file_path=${encodeURIComponent(filePath)}`, { method: 'POST' }),
   delete: (id: number) =>
     request<{ message: string }>(`/api/containerlab/topologies/${id}`, { method: 'DELETE' }),
+};
+
+// ─── Templates ───
+
+export interface TemplateData {
+  id: number;
+  name: string;
+  description: string | null;
+  vendor: string;
+  category: string;
+  template_body: string;
+  variables: any;
+  tags: string | null;
+  is_builtin: boolean;
+  created_at: string;
+  updated_at: string | null;
+}
+
+export interface TemplateCreateData {
+  name: string;
+  description?: string;
+  vendor?: string;
+  category?: string;
+  template_body: string;
+  variables?: any;
+  tags?: string;
+}
+
+export const templatesApi = {
+  list: (vendor?: string, category?: string) => {
+    const params = new URLSearchParams();
+    if (vendor) params.set('vendor', vendor);
+    if (category) params.set('category', category);
+    const qs = params.toString();
+    return request<TemplateData[]>(`/api/templates/${qs ? `?${qs}` : ''}`);
+  },
+  get: (id: number) => request<TemplateData>(`/api/templates/${id}`),
+  create: (data: TemplateCreateData) =>
+    request<TemplateData>('/api/templates/', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: number, data: Partial<TemplateCreateData>) =>
+    request<TemplateData>(`/api/templates/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  delete: (id: number) =>
+    request<{ message: string }>(`/api/templates/${id}`, { method: 'DELETE' }),
+  render: (templateId: number, variables: Record<string, string> = {}) =>
+    request<any>('/api/templates/render', {
+      method: 'POST',
+      body: JSON.stringify({ template_id: templateId, variables }),
+    }),
+  apply: (switchId: number, templateId: number, variables: Record<string, string> = {}) =>
+    request<any>(`/api/templates/apply/${switchId}`, {
+      method: 'POST',
+      body: JSON.stringify({ template_id: templateId, variables }),
+    }),
+  seed: () => request<{ message: string }>('/api/templates/seed', { method: 'POST' }),
 };
 
 // ─── SSE Stream (for chat) ───

@@ -1,6 +1,6 @@
-# Hermes Switch Manager ⚡
+# Nethermind ⚡
 
-**AI-powered network switch configuration management** — a comprehensive, open-source platform that combines multi-vendor SSH management, an AI chat assistant, workflow automation, security auditing, Containerlab topology integration, and real-time device monitoring.
+**AI-powered network switch management platform** — a comprehensive, open-source platform that combines multi-vendor SSH and **serial console** management, a **Jinja2 config template engine** with 45+ built-in templates, an AI chat assistant, workflow automation, security auditing, Containerlab topology integration, and real-time device monitoring.
 
 > Inspired by [IRIS](https://github.com/kiskander/iris), [NetClaw](https://github.com/automateyournetwork/netclaw), and [AINetworkHelperForContainerLab](https://github.com/zerxen/AINetworkHelperForContainerLab).
 
@@ -10,8 +10,10 @@
 
 | Feature | Description |
 |---------|-------------|
-| **🔌 Multi-Vendor SSH** | Cisco IOS/XE/X, Juniper JunOS, Arista EOS, Linux — via Netmiko |
-| **🤖 Hermes AI Agent** | OpenAI-powered chat assistant with tool calling (pull configs, check health, run audits) |
+| **🔌 Multi-Vendor SSH + Serial** | Cisco IOS/XE/X, **HP Aruba (OS-Switch)**, Juniper JunOS, Arista EOS, Linux — via Netmiko **and** serial console (COM) |
+| **📋 Config Templates** | **45+ built-in Jinja2 templates** — factory reset, VLANs, STP, OSPF, security, PoE, and more. Create your own with variable substitution |
+| **🤖 Hermes AI Agent** | OpenAI-powered chat assistant with tool calling (pull configs, check health, run audits, apply templates) |
+| **🔧 Serial Console Support** | Connect via COM/serial for initial provisioning, out-of-band management, and recovery — full baud/parity/stop-bit control |
 | **📋 Config Management** | Backup, version history, unified diff, change detection |
 | **🔄 Workflow Engine** | IRIS-style disciplined workflow: Discover → Verify → Propose → Confirm → Execute → Verify → Document |
 | **🔒 Security Auditing** | CVE scanning, ACL review, AAA checks, password policy, compliance (CIS/NIST) |
@@ -29,12 +31,23 @@
 - Node.js 18+
 - Docker & Docker Compose (optional)
 
+### Docker Compose (recommended)
+
+```bash
+git clone https://github.com/OneByJorah/nethermind.git
+cd nethermind
+docker-compose up -d --build
+```
+
+Backend → http://localhost:8000 (API docs at /docs)  
+Frontend → http://localhost:3000
+
 ### Local Development
 
 ```bash
 # 1. Clone and enter
-git clone https://github.com/your-org/hermes-switch-manager.git
-cd hermes-switch-manager
+git clone https://github.com/OneByJorah/nethermind.git
+cd nethermind
 
 # 2. Backend setup
 cd backend
@@ -49,36 +62,30 @@ npm install
 npm run dev
 ```
 
-Backend → http://localhost:8000 (API docs at /docs)  
-Frontend → http://localhost:3000
-
-### Docker Compose
-
-```bash
-docker-compose up -d
-```
-
 ---
 
 ## Architecture 🏗️
 
 ```
-hermes-switch-manager/
+nethermind/
 ├── backend/                  # FastAPI Python backend
 │   ├── main.py              # App entry point + lifespan
 │   ├── config.py            # Pydantic settings
 │   ├── database.py          # SQLAlchemy engine + session
 │   ├── models/              # Database models
-│   │   └── __init__.py      # Switch, ConfigBackup, ChatMessage, Workflow, etc.
+│   │   └── __init__.py      # Switch, ConfigBackup, ConfigTemplate, ChatMessage, Workflow, etc.
 │   ├── schemas.py           # Pydantic request/response schemas
 │   ├── services/            # Business logic
 │   │   ├── netmiko_client.py       # Multi-vendor SSH client
+│   │   ├── serial_client.py        # Serial console client (COM port)
+│   │   ├── template_engine.py      # Jinja2 config template engine (45+ built-in templates)
 │   │   ├── hermes_agent.py         # AI agent with tool calling
-│   │   ├── workflow_engine.py       # IRIS workflow engine
+│   │   ├── workflow_engine.py      # IRIS workflow engine
 │   │   ├── containerlab_service.py # Topology parser
 │   │   └── security_auditor.py     # CVE, ACL, AAA audits
 │   ├── routers/             # FastAPI routers
-│   │   ├── switches.py      # CRUD + sync + health
+│   │   ├── switches.py      # CRUD + sync + health (SSH + serial)
+│   │   ├── templates.py     # Config template CRUD + render + apply
 │   │   ├── configs.py       # Config backup + diff
 │   │   ├── chat.py          # SSE streaming chat
 │   │   ├── workflows.py     # Workflow lifecycle
@@ -89,7 +96,7 @@ hermes-switch-manager/
 │   └── requirements.txt
 ├── frontend/                 # Next.js 14 frontend
 │   ├── src/
-│   │   ├── app/             # Pages (dashboard, switches, configs, chat, etc.)
+│   │   ├── app/             # Pages (dashboard, switches, configs, templates, chat, etc.)
 │   │   ├── components/      # Reusable components
 │   │   └── lib/             # API client + utils
 │   ├── Dockerfile
@@ -101,19 +108,80 @@ hermes-switch-manager/
 
 ---
 
+## Config Templates 📋
+
+Nethermind ships with **45 built-in templates** that auto-seed on first startup. Templates use Jinja2 syntax with variable substitution.
+
+### HP ArubaOS-Switch (40 templates)
+
+| Category | Templates |
+|----------|-----------|
+| **Initial Setup** | Hostname + Mgmt IP, Factory Reset & Erase, Save Config |
+| **Management** | SSH & Management Access, Banner, LLDP, Stacking |
+| **Security** | AAA/RADIUS, TACACS+, Port Security (MAC), 802.1X, DHCP Snooping, DAI, Storm Control |
+| **VLAN** | VLAN Creation (multi), Access Port, Trunk Port, Voice VLAN, MAC VLAN |
+| **Interfaces** | LACP Trunk (static + dynamic), Interface Range Config, PoE |
+| **Routing** | Static Route, OSPF, VLAN Interface (SVI), VRRP |
+| **ACLs** | Standard IPv4 ACL, Extended IPv4 ACL |
+| **Monitoring** | sFlow, Mirror Port (SPAN), Syslog/Logging |
+| **STP** | RSTP/MSTP Configuration |
+| **Maintenance** | Firmware Upgrade, Config Backup/Restore (TFTP), Disable/Enable All Ports |
+
+### Cisco IOS (5 templates)
+
+| Category | Templates |
+|----------|-----------|
+| **VLAN** | VLAN Configuration |
+| **Interfaces** | Access Port, Trunk Port |
+| **Security** | SSH & Management Access |
+| **Maintenance** | Factory Reset |
+
+### Creating Your Own
+
+Templates support Jinja2 variables like `{{ vlan_id }}` and `{{ vlan_name }}`. Define variable schemas (type, description, required) for the UI to auto-generate input forms.
+
+---
+
+## Serial Console Support 🔧
+
+Connect to switches via serial console cable for:
+- **Initial provisioning** — before IP/SSH is configured
+- **Out-of-band management** — when the network is down
+- **Recovery scenarios** — password recovery, boot issues
+- **Lab environments** — direct console access
+
+Configure per-switch: port (`/dev/ttyUSB0`, `COM3`), baud rate (9600–115200), data bits, parity, stop bits, and enable password.
+
+---
+
 ## API Endpoints 🔌
 
 ### Switches
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/api/switches/` | List switches |
-| POST | `/api/switches/` | Add switch |
+| POST | `/api/switches/` | Add switch (SSH or serial) |
 | GET | `/api/switches/{id}` | Get switch |
 | PUT | `/api/switches/{id}` | Update switch |
 | DELETE | `/api/switches/{id}` | Delete switch |
-| POST | `/api/switches/{id}/sync` | Pull config via SSH |
+| POST | `/api/switches/{id}/sync` | Pull config via SSH or serial |
 | POST | `/api/switches/{id}/health` | Health check |
 | POST | `/api/switches/{id}/commands` | Execute show commands |
+| POST | `/api/switches/{id}/push-config` | Push config commands |
+| POST | `/api/switches/{id}/apply-template` | Render & preview template |
+| GET | `/api/switches/serial/ports` | List available COM ports |
+
+### Templates
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/templates/` | List templates |
+| POST | `/api/templates/` | Create template |
+| GET | `/api/templates/{id}` | Get template |
+| PUT | `/api/templates/{id}` | Update template |
+| DELETE | `/api/templates/{id}` | Delete template |
+| POST | `/api/templates/render` | Preview rendered config |
+| POST | `/api/templates/apply/{switch_id}` | Apply template to switch |
+| POST | `/api/templates/seed` | Seed built-in templates |
 
 ### Configs
 | Method | Path | Description |
@@ -161,8 +229,8 @@ Hermes is an OpenAI-powered network assistant with access to the following tools
 |------|-------------|
 | `get_switch_list` | List all managed switches |
 | `get_switch_config` | Get latest running config |
-| `run_switch_command` | Execute show commands via SSH |
-| `pull_live_config` | SSH and pull fresh config |
+| `run_switch_command` | Execute show commands via SSH or serial |
+| `pull_live_config` | Pull fresh config from device |
 | `get_switch_health` | Real-time health metrics |
 | `get_security_findings` | Security audit results |
 | `diff_configs` | Compare two configs |

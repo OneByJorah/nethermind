@@ -18,7 +18,8 @@ from dotenv import load_dotenv
 
 from config import settings
 from database import init_db
-from routers import switches, configs, chat, workflows, dashboard, security, containerlab
+from routers import switches, configs, chat, workflows, dashboard, security, containerlab, templates
+from services.template_engine import seed_builtin_templates
 
 # Load environment variables
 load_dotenv()
@@ -37,6 +38,8 @@ async def lifespan(app: FastAPI):
     logger.info(f"Starting {settings.APP_NAME} v{settings.VERSION}")
     init_db()
     logger.info("Database tables created/verified")
+    # Seed built-in config templates
+    seed_builtin_templates()
     yield
     logger.info("Shutting down")
 
@@ -67,6 +70,7 @@ app.include_router(workflows.router)
 app.include_router(dashboard.router)
 app.include_router(security.router)
 app.include_router(containerlab.router)
+app.include_router(templates.router)
 
 
 @app.get("/health")
