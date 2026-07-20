@@ -1,4 +1,6 @@
-# Nethermind ⚡
+# Nethermind ⚡ — DEPRECATED
+
+> ⚠️ **This repository is deprecated.** All features (serial console, Jinja2 template engine, 45+ templates) have been **merged into [hermes-switch-manager](https://github.com/OneByJorah/hermes-switch-manager)**. See [DEPRECATED.md](DEPRECATED.md) for details. No new development will occur here.
 
 **AI-powered network switch management platform** — a comprehensive, open-source platform that combines multi-vendor SSH and **serial console** management, a **Jinja2 config template engine** with 45+ built-in templates, an AI chat assistant, workflow automation, security auditing, Containerlab topology integration, and real-time device monitoring.
 
