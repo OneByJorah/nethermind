@@ -1,25 +1,34 @@
 # Security Policy
 
-## Reporting a Vulnerability
-
-If you discover a security vulnerability, please report it responsibly:
-
-1. **Do NOT** open a public GitHub issue
-2. **Email**: security@jorah.one
-3. **Include**: Description of the vulnerability, steps to reproduce, potential impact
-
-## Response Timeline
-
-- **Acknowledgment**: Within 48 hours
-- **Assessment**: Within 1 week
-- **Fix**: Depends on severity, typically within 2 weeks
-
 ## Supported Versions
 
 | Version | Supported |
 |---------|-----------|
 | Latest  | ✅ Yes |
 | Older   | ❌ No |
+
+## Reporting a Vulnerability
+
+Please report security vulnerabilities to **info@jorahone.com**. Do NOT
+report security vulnerabilities through public GitHub issues.
+
+You should receive a response within 48 hours. If for some reason you do not,
+please follow up via email to ensure we received your original message.
+
+Please include the following information:
+
+- Type of issue (e.g. buffer overflow, SQL injection, cross-site scripting, etc.)
+- Full paths of source file(s) related to the manifestation of the issue
+- The location of the affected source code (tag/branch/commit or direct URL)
+- Any special configuration required to reproduce the issue
+- Step-by-step instructions to reproduce the issue
+- Proof-of-concept or exploit code (if possible)
+- Impact of the issue, including how an attacker might exploit it
+
+We prefer to receive reports via email. We will acknowledge receipt within
+48 hours and send a more detailed response within 72 hours.
+
+This project follows a 90-day disclosure timeline.
 
 ## Security Best Practices
 
