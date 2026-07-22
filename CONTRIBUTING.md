@@ -1,38 +1,41 @@
-# Contributing to $(basename $(pwd))
+# Contributing to JorahOne Projects
 
-Thank you for your interest in contributing!
+Thank you for your interest in contributing! This document provides guidelines for contributing to our projects.
 
 ## How to Contribute
 
-1. **Fork** the repository
-2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
-3. **Commit** your changes (`git commit -m 'Add amazing feature'`)
-4. **Push** to the branch (`git push origin feature/amazing-feature`)
-5. **Open** a Pull Request
+1. **Fork the Repository** — Create a fork of the project on GitHub.
+2. **Create a Branch** — Create a feature branch from `main`.
+3. **Make Changes** — Implement your changes with clear commit messages.
+4. **Test** — Ensure your changes work correctly.
+5. **Submit a PR** — Open a pull request with a clear description.
 
 ## Development Setup
 
 ```bash
-git clone https://github.com/OneByJorah/$(basename $(pwd)).git
-cd $(basename $(pwd))
+git clone https://github.com/your-username/PROJECT.git
+cd PROJECT
+# Follow project-specific setup instructions
 ```
-
-See README.md for specific setup instructions.
 
 ## Code Standards
 
-- Follow existing code style
+- Follow existing code style and conventions
+- Write clear, descriptive commit messages
 - Add comments for complex logic
-- Update documentation for new features
-- Test your changes before submitting
+- Update documentation as needed
 
 ## Pull Request Guidelines
 
-- Provide a clear description of changes
+- Provide a clear PR title and description
 - Reference any related issues
-- Ensure all tests pass
-- Keep PRs focused on a single change
+- Include screenshots for UI changes
+- Ensure all checks pass
 
-## License
+## Code of Conduct
 
-By contributing, you agree that your contributions will be licensed under the MIT License.
+Please review our [Code of Conduct](CODE_OF_CONDUCT.md) before contributing.
+
+## Questions?
+
+Open an issue or contact **info@jorahone.com**.
