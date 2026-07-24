@@ -43,3 +43,6 @@ logs/
 coverage/
 .pytest_cache/
 .mypy_cache/
+
+# OneByJorah portfolio tooling
+.venv-screenshot/
