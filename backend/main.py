@@ -18,7 +18,7 @@ from dotenv import load_dotenv
 
 from config import settings
 from database import init_db
-from routers import switches, configs, chat, workflows, dashboard, security, containerlab, templates
+from routers import switches, configs, chat, workflows, dashboard, security, containerlab, templates, discovery
 from services.template_engine import seed_builtin_templates
 
 # Load environment variables
@@ -71,6 +71,7 @@ app.include_router(dashboard.router)
 app.include_router(security.router)
 app.include_router(containerlab.router)
 app.include_router(templates.router)
+app.include_router(discovery.router)
 
 
 @app.get("/health")

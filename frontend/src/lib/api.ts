@@ -227,6 +227,35 @@ export const containerlabApi = {
     request<{ message: string }>(`/api/containerlab/topologies/${id}`, { method: 'DELETE' }),
 };
 
+// ─── System Discovery ───
+
+export interface SerialPort {
+  device: string;
+  description: string;
+  manufacturer: string;
+  hwid: string;
+}
+
+export interface UsbDevice {
+  bus: number;
+  device: number;
+  vendor_id: string;
+  product_id: string;
+  description: string;
+}
+
+export interface DiscoveryData {
+  serial_ports: SerialPort[];
+  usb_devices: UsbDevice[];
+  usb_serial_adapters: { device: string; name: string; type: string }[];
+}
+
+export const systemApi = {
+  serialPorts: () => request<SerialPort[]>('/api/system/serial-ports'),
+  usbDevices: () => request<UsbDevice[]>('/api/system/usb-devices'),
+  discovery: () => request<DiscoveryData>('/api/system/discovery'),
+};
+
 // ─── Templates ───
 
 export interface TemplateData {

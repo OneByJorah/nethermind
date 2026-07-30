@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { dashboardApi, DashboardStats } from '@/lib/api'
+import { dashboardApi, systemApi, DashboardStats, DiscoveryData } from '@/lib/api'
 import {
   Network,
   FileText,
@@ -13,20 +13,26 @@ import {
   CheckCircle,
   XCircle,
   Clock,
+  HardDrive,
+  Radio,
+  RefreshCw,
 } from 'lucide-react'
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [healthSummary, setHealthSummary] = useState<any[]>([])
+  const [discovery, setDiscovery] = useState<DiscoveryData | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     Promise.all([
       dashboardApi.stats(),
       dashboardApi.healthSummary(),
-    ]).then(([s, h]) => {
+      systemApi.discovery(),
+    ]).then(([s, h, d]) => {
       setStats(s)
       setHealthSummary(h)
+      setDiscovery(d)
     }).finally(() => setLoading(false))
   }, [])
 
@@ -59,6 +65,57 @@ export default function DashboardPage() {
         <StatCard icon={<GitBranch className="w-5 h-5" />} label="Active Workflows" value={stats?.active_workflows ?? 0}
           sub={`${stats?.total_topologies ?? 0} topologies`} color="amber" />
       </div>
+
+      {/* Hardware Discovery */}
+      {discovery && (discovery.serial_ports.length > 0 || discovery.usb_devices.length > 0) && (
+        <div className="card">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold text-white flex items-center gap-2">
+              <Radio className="w-4 h-4 text-green-400" />
+              Detected Hardware
+            </h2>
+            <button onClick={async () => {
+              const d = await systemApi.discovery();
+              setDiscovery(d);
+            }} className="btn btn-secondary btn-sm">
+              <RefreshCw className="w-3.5 h-3.5" /> Refresh
+            </button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {discovery.serial_ports.length > 0 && (
+              <div>
+                <h3 className="text-xs uppercase tracking-wider text-slate-500 mb-2">Serial / COM Ports</h3>
+                <div className="space-y-1.5">
+                  {discovery.serial_ports.map(p => (
+                    <div key={p.device} className="flex items-center justify-between py-1.5 px-3 rounded-lg bg-slate-800/50 border border-slate-700/50 text-sm">
+                      <span className="font-mono text-green-400">{p.device}</span>
+                      <span className="text-slate-400">{p.description || p.manufacturer || '—'}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {discovery.usb_devices.filter(d => d.description !== 'Linux Foundation 2.0 root hub' && d.description !== 'Linux Foundation 3.0 root hub').length > 0 && (
+              <div>
+                <h3 className="text-xs uppercase tracking-wider text-slate-500 mb-2">USB Devices</h3>
+                <div className="space-y-1.5">
+                  {discovery.usb_devices.filter(d =>
+                    d.description !== 'Linux Foundation 2.0 root hub' && d.description !== 'Linux Foundation 3.0 root hub'
+                  ).map(d => (
+                    <div key={`${d.bus}-${d.device}`} className="flex items-center justify-between py-1.5 px-3 rounded-lg bg-slate-800/50 border border-slate-700/50 text-sm">
+                      <div className="flex items-center gap-2">
+                        <HardDrive className="w-3.5 h-3.5 text-blue-400" />
+                        <span className="text-slate-300">{d.description}</span>
+                      </div>
+                      <span className="font-mono text-xs text-slate-500">{d.vendor_id}:{d.product_id}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Health Summary & Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
