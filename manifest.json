@@ -1,0 +1,71 @@
+{
+  "name": "nethermind",
+  "description": "AI-powered network switch management \u2014 multi-vendor SSH + serial, Jinja2 templates, Hermes AI agent, and security auditing.",
+  "tagline": "AI-powered network switch management",
+  "repo_url": "https://github.com/OneByJorah/nethermind",
+  "what_it_does": "AI-powered network switch management \u2014 multi-vendor SSH + serial, Jinja2 templates, Hermes AI agent, and security auditing.",
+  "quickstart": "[ -f .env.example ] && cp .env.example .env\ndocker compose up -d",
+  "quickstart_extra": "",
+  "features": [
+    {
+      "title": "Multi-Vendor Support",
+      "description": "Manage Cisco, HP Aruba, Juniper, Arista, and Linux devices."
+    },
+    {
+      "title": "SSH & Serial",
+      "description": "Connect via Netmiko (SSH) and serial console (COM) connections."
+    },
+    {
+      "title": "45+ Jinja2 Templates",
+      "description": "Built-in configuration templates for common network tasks."
+    },
+    {
+      "title": "IRIS-Style Workflow Engine",
+      "description": "Disciplined configuration change management."
+    },
+    {
+      "title": "Hermes AI Agent",
+      "description": "OpenAI-powered chat assistant for network operations."
+    },
+    {
+      "title": "Security Auditing",
+      "description": "CVE scanning, AAA checks, CIS/NIST compliance auditing."
+    }
+  ],
+  "mermaid": "flowchart LR\n    A[User] -->|Web / CLI| B[nethermind]\n    B --> C[Data / Config]\n    B --> D[External Services]",
+  "stack": [
+    "Docker / Docker Compose",
+    "React + TypeScript",
+    "CSS / Styling",
+    "Networking"
+  ],
+  "configuration": "Set environment variables as described in the Configuration section. Copy `.env.example` to `.env` when available.",
+  "license": "MIT License",
+  "author": "Jhonattan L. Jimenez (OneByJorah)",
+  "badges": [
+    "![License](https://img.shields.io/badge/license-MIT-brightgreen)",
+    "![Language](https://img.shields.io/badge/language-Python-blue)"
+  ],
+  "screenshot": "docs/assets/screenshot.png",
+  "demo_gif": "",
+  "primary_language": "Python",
+  "topics": [
+    "ai",
+    "arista",
+    "cisco",
+    "jorahone",
+    "juniper",
+    "network-management",
+    "networking",
+    "serial-console",
+    "hp-aruba"
+  ],
+  "is_fork": false,
+  "parent": null,
+  "default_branch": "master",
+  "screenshot_strategy": {
+    "type": "web_dashboard",
+    "method": "docker_or_direct",
+    "port_guess": 8000
+  }
+}
