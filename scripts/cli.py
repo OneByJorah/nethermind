@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "backend"))
 from services.switch_config_model import SwitchConfig
 from services.connection import ConnParams, Connection
 from services.deployer import Deployer
-from services.config_parser import parse_file
+from services.config_parser import parse_file, parse_config
 from services.switch_config_model import standard_access_switch, standard_core_switch
 
 
@@ -81,6 +81,110 @@ def cmd_deploy(args):
     sys.exit(0 if res.success else 1)
 
 
+
+
+def cmd_upload(args):
+    """Upload a .txt config file: parse it and save as JSON."""
+    file_path = Path(args.file)
+    if not file_path.exists():
+        print(f"ERROR: file not found: {args.file}")
+        sys.exit(1)
+
+    print(f"Parsing {file_path.name}...")
+    cfg = parse_file(str(file_path))
+
+    # Determine output path
+    if args.out:
+        out_path = Path(args.out)
+    else:
+        out_path = file_path.with_suffix('.json')
+
+    out_path.write_text(cfg.to_json())
+    print(f"Saved structured config to {out_path}")
+    print(f"  hostname: {cfg.hostname}")
+    print(f"  role:     {cfg.role}")
+    print(f"  vlans:    {len(cfg.vlans)}")
+    if cfg.vlans:
+        for v in cfg.vlans:
+            print(f"    vlan {v.id}: {v.name or '(unnamed)'}")
+
+
+def cmd_backup(args):
+    """Connect to a live switch and pull its running config."""
+    logging.basicConfig(level=logging.INFO)
+
+    params = ConnParams(
+        transport=args.transport,
+        host=args.host,
+        port=args.port,
+        username=args.username,
+        password=args.password,
+        serial_port=args.serial,
+        baud=args.baud,
+    )
+
+    print(f"Connecting to {args.host} via {args.transport}...")
+    conn = Connection.build(params)
+    conn.connect()
+
+    # Get to privileged exec
+    from services.connection import PRIV_PROMPT, OPER_PROMPT
+    conn.read_until(PRIV_PROMPT + "|" + OPER_PROMPT, timeout=8.0)
+
+    # Pull running config
+    print("Pulling running config...")
+    conn.send_line("show running-config", delay=2.0)
+    config_text = conn.read_until(PRIV_PROMPT, timeout=30.0)
+
+    # Clean up: remove echo of the command itself and the prompt
+    lines = config_text.splitlines()
+    clean_lines = []
+    for line in lines:
+        stripped = line.strip()
+        # Skip the command echo and prompt lines
+        if stripped.startswith("show running-config"):
+            continue
+        if stripped.endswith(">") or stripped.endswith("#") and len(stripped) < 30:
+            continue
+        clean_lines.append(line)
+
+    config_text = "
+".join(clean_lines).strip() + "
+"
+
+    conn.close()
+
+    # Determine output path
+    if args.out:
+        out_path = Path(args.out)
+    else:
+        hostname = "switch"
+        for line in config_text.splitlines():
+            if line.strip().startswith("hostname"):
+                parts = line.split()
+                if len(parts) >= 2:
+                    hostname = parts[1].strip().strip('"')
+                break
+        out_path = Path(f"{hostname}_backup.txt")
+
+    out_path.write_text(config_text)
+    print(f"Config saved to {out_path}")
+    print(f"  {len(config_text.splitlines())} lines backed up")
+
+    # Also save as parsed JSON if requested
+    if args.json:
+        try:
+            cfg = parse_config(config_text)
+            json_path = Path(args.json)
+            json_path.write_text(cfg.to_json())
+            print(f"Structured JSON saved to {json_path}")
+            print(f"  hostname: {cfg.hostname}")
+            print(f"  role:     {cfg.role}")
+            print(f"  vlans:    {len(cfg.vlans)}")
+        except Exception as e:
+            print(f"Warning: could not parse config to JSON: {e}")
+
+
 def render_config(cfg):
     """Render a SwitchConfig using the Jinja2 template engine."""
     from jinja2 import Environment, FileSystemLoader
@@ -112,6 +216,26 @@ def build_parser() -> argparse.ArgumentParser:
         description="Nethermind — configure Aruba/ProCurve switches via "
                     "console, SSH or Telnet.")
     sub = p.add_subparsers(dest="cmd", required=True)
+
+
+    # upload
+    up = sub.add_parser("upload", help="upload a .txt config: parse and save as JSON")
+    up.add_argument("file", help="path to the .txt running-config file")
+    up.add_argument("--out", help="output JSON path (default: same name .json)")
+    up.set_defaults(func=cmd_upload)
+
+    # backup
+    bu = sub.add_parser("backup", help="pull running config from a live switch")
+    bu.add_argument("--transport", choices=["serial", "ssh", "telnet"], default="telnet")
+    bu.add_argument("--host", default="127.0.0.1")
+    bu.add_argument("--port", type=int, default=9023)
+    bu.add_argument("--username", default="admin")
+    bu.add_argument("--password", default="")
+    bu.add_argument("--serial", default="COM3")
+    bu.add_argument("--baud", type=int, default=9600)
+    bu.add_argument("--out", help="save raw config to this path")
+    bu.add_argument("--json", help="also save parsed JSON to this path")
+    bu.set_defaults(func=cmd_backup)
 
     # render
     r = sub.add_parser("render", help="render a config to CLI text")

@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { switchesApi, configsApi, SwitchData, ConfigBackupData } from '@/lib/api'
+import { switchesApi, configsApi, configParserApi, SwitchData, ConfigBackupData } from '@/lib/api'
 import { timeAgo } from '@/lib/utils'
-import { FileText, Copy, Download, GitCompare, Search } from 'lucide-react'
+import { FileText, Copy, Download, GitCompare, Upload, CloudDownload, Loader2, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function ConfigsPage() {
@@ -16,6 +16,16 @@ export default function ConfigsPage() {
   const [backupA, setBackupA] = useState<number | null>(null)
   const [backupB, setBackupB] = useState<number | null>(null)
   const [diffResult, setDiffResult] = useState<any>(null)
+
+  // Upload state
+  const [uploading, setUploading] = useState(false)
+
+  // Backup modal state
+  const [showBackupModal, setShowBackupModal] = useState(false)
+  const [backupForm, setBackupForm] = useState({
+    host: '', port: 22, transport: 'ssh', username: 'admin', password: '',
+  })
+  const [backingUp, setBackingUp] = useState(false)
 
   useEffect(() => {
     switchesApi.list().then(setSwitches).catch(() => {})
@@ -47,12 +57,90 @@ export default function ConfigsPage() {
     toast.success('Copied to clipboard')
   }
 
+  // ─── Upload Config ──────────────────────────────────────────────────
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      const result = await configParserApi.upload(file, true)
+      toast.success(`Uploaded ${result.hostname || file.name} — ${result.vlans} VLANs parsed`)
+      // Refresh switch list
+      const updated = await switchesApi.list()
+      setSwitches(updated)
+      // Auto-select the new switch
+      if (result.switch_id) {
+        loadConfigs(result.switch_id)
+      }
+    } catch (err: any) {
+      toast.error(`Upload failed: ${err.message}`)
+    } finally {
+      setUploading(false)
+      e.target.value = ''
+    }
+  }
+
+  // ─── Backup from Live Switch ────────────────────────────────────────
+
+  const handleBackup = async () => {
+    if (!backupForm.host) { toast.error('Enter the switch IP/hostname'); return }
+    setBackingUp(true)
+    try {
+      const result = await configParserApi.backup({
+        transport: backupForm.transport,
+        host: backupForm.host,
+        port: backupForm.port,
+        username: backupForm.username,
+        password: backupForm.password,
+        save_to_db: true,
+      })
+      toast.success(`Backed up ${result.hostname} — ${result.line_count} lines`)
+      setShowBackupModal(false)
+      // Refresh and select
+      const updated = await switchesApi.list()
+      setSwitches(updated)
+      if (result.switch_id) {
+        loadConfigs(result.switch_id)
+      }
+    } catch (err: any) {
+      toast.error(`Backup failed: ${err.message}`)
+    } finally {
+      setBackingUp(false)
+    }
+  }
+
+  const handleBackupSwitch = async (sw: SwitchData) => {
+    setBackingUp(true)
+    try {
+      const result = await configParserApi.backupById(sw.id, sw.connection_type)
+      toast.success(`Backed up ${result.hostname} — ${result.line_count} lines`)
+      loadConfigs(sw.id)
+    } catch (err: any) {
+      toast.error(`Backup failed: ${err.message}`)
+    } finally {
+      setBackingUp(false)
+    }
+  }
+
   return (
     <div className="space-y-6 fade-in">
+      {/* Header with Upload & Backup buttons */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white">Configurations</h1>
-          <p className="text-slate-400 mt-1">View, compare, and manage device configurations</p>
+          <p className="text-slate-400 mt-1">View, upload, backup, and compare device configurations</p>
+        </div>
+        <div className="flex gap-2">
+          <label className="btn btn-primary cursor-pointer">
+            {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+            Upload Config
+            <input type="file" className="hidden" accept=".txt,.cfg,.conf"
+              onChange={handleUpload} disabled={uploading} />
+          </label>
+          <button onClick={() => setShowBackupModal(true)} className="btn btn-primary">
+            <CloudDownload className="w-4 h-4" /> Backup from Switch
+          </button>
         </div>
       </div>
 
@@ -62,16 +150,25 @@ export default function ConfigsPage() {
           <h2 className="font-semibold text-white mb-3 text-sm">Select Device</h2>
           <div className="space-y-1">
             {switches.map(sw => (
-              <button key={sw.id} onClick={() => loadConfigs(sw.id)}
-                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                  selectedSwitch === sw.id ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
-                  'text-slate-400 hover:text-white hover:bg-slate-800'
-                }`}>
-                {sw.hostname}
-                <span className="block text-xs text-slate-500">{sw.ip_address}</span>
-              </button>
+              <div key={sw.id} className={`flex items-center justify-between rounded-lg transition-colors ${
+                selectedSwitch === sw.id ? 'bg-blue-500/10 border border-blue-500/20' : 'hover:bg-slate-800 border border-transparent'
+              }`}>
+                <button onClick={() => loadConfigs(sw.id)}
+                  className="flex-1 text-left px-3 py-2">
+                  <span className={`text-sm ${selectedSwitch === sw.id ? 'text-blue-400' : 'text-slate-400'}`}>
+                    {sw.hostname}
+                  </span>
+                  <span className="block text-xs text-slate-500">{sw.ip_address}</span>
+                </button>
+                <button onClick={() => handleBackupSwitch(sw)}
+                  disabled={backingUp}
+                  className="px-2 py-1 text-slate-500 hover:text-blue-400 transition-colors"
+                  title="Backup config from this switch">
+                  {backingUp ? <Loader2 className="w-3 h-3 animate-spin" /> : <CloudDownload className="w-3 h-3" />}
+                </button>
+              </div>
             ))}
-            {switches.length === 0 && <p className="text-slate-500 text-sm py-4 text-center">No switches</p>}
+            {switches.length === 0 && <p className="text-slate-500 text-sm py-4 text-center">No switches yet</p>}
           </div>
         </div>
 
@@ -82,6 +179,7 @@ export default function ConfigsPage() {
               <div className="text-center">
                 <FileText className="w-12 h-12 mx-auto mb-3 opacity-30" />
                 <p>Select a device to view its configuration</p>
+                <p className="text-sm mt-2 text-slate-600">Or upload a .txt config file / backup from a live switch</p>
               </div>
             </div>
           ) : (
@@ -114,7 +212,7 @@ export default function ConfigsPage() {
                       <pre className="text-sm leading-relaxed">{latestConfig.config}</pre>
                     </>
                   ) : (
-                    <p className="text-slate-500 text-center py-8">No config backup available. Sync the device first.</p>
+                    <p className="text-slate-500 text-center py-8">No config backup available. Upload a config or backup from the switch.</p>
                   )}
                 </div>
               )}
@@ -164,6 +262,62 @@ export default function ConfigsPage() {
           )}
         </div>
       </div>
+
+      {/* Backup Modal */}
+      {showBackupModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={() => setShowBackupModal(false)}>
+          <div className="bg-slate-900 border border-slate-700 rounded-xl p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-white">Backup from Live Switch</h2>
+              <button onClick={() => setShowBackupModal(false)} className="text-slate-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm text-slate-400 mb-1 block">Transport</label>
+                <select className="input select w-full" value={backupForm.transport}
+                  onChange={e => setBackupForm({ ...backupForm, transport: e.target.value })}>
+                  <option value="ssh">SSH</option>
+                  <option value="telnet">Telnet</option>
+                  <option value="serial">Serial</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-sm text-slate-400 mb-1 block">Switch IP / Hostname</label>
+                <input className="input w-full" placeholder="192.168.1.1"
+                  value={backupForm.host}
+                  onChange={e => setBackupForm({ ...backupForm, host: e.target.value })} />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm text-slate-400 mb-1 block">Port</label>
+                  <input className="input w-full" type="number" placeholder="22"
+                    value={backupForm.port}
+                    onChange={e => setBackupForm({ ...backupForm, port: parseInt(e.target.value) || 22 })} />
+                </div>
+                <div>
+                  <label className="text-sm text-slate-400 mb-1 block">Username</label>
+                  <input className="input w-full" placeholder="admin"
+                    value={backupForm.username}
+                    onChange={e => setBackupForm({ ...backupForm, username: e.target.value })} />
+                </div>
+              </div>
+              <div>
+                <label className="text-sm text-slate-400 mb-1 block">Password</label>
+                <input className="input w-full" type="password" placeholder="***"
+                  value={backupForm.password}
+                  onChange={e => setBackupForm({ ...backupForm, password: e.target.value })} />
+              </div>
+              <button onClick={handleBackup} disabled={backingUp || !backupForm.host}
+                className="btn btn-primary w-full">
+                {backingUp ? <Loader2 className="w-4 h-4 animate-spin" /> : <CloudDownload className="w-4 h-4" />}
+                {backingUp ? 'Backing up...' : 'Backup Now'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
