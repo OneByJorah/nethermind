@@ -5,8 +5,6 @@
 ![License](https://img.shields.io/badge/license-MIT-brightgreen)
 ![Language](https://img.shields.io/badge/language-Python-blue)
 
-![Dashboard](docs/screenshots/dashboard.png)
-
 ---
 
 ## What it does
