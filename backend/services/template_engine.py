@@ -7,7 +7,8 @@ import json
 import logging
 from typing import Optional
 
-from jinja2 import Template, TemplateError, UndefinedError
+from jinja2 import TemplateError, UndefinedError
+from jinja2.sandbox import SandboxedEnvironment
 
 from database import SessionLocal
 from models import ConfigTemplate, AuditLog
@@ -1647,6 +1648,14 @@ def seed_builtin_templates():
         existing = db.query(ConfigTemplate).filter_by(is_builtin=True).count()
         if existing > 0:
             logger.info(f"Built-in templates already seeded ({existing} found)")
+            # Normalize legacy double-encoded variables stored as JSON strings
+            for t in db.query(ConfigTemplate).filter_by(is_builtin=True).all():
+                if isinstance(t.variables, str):
+                    try:
+                        t.variables = json.loads(t.variables)
+                    except (ValueError, TypeError):
+                        pass
+            db.commit()
             return
 
         for tmpl_data in BUILTIN_TEMPLATES:
@@ -1656,7 +1665,7 @@ def seed_builtin_templates():
                 vendor=tmpl_data["vendor"],
                 category=tmpl_data["category"],
                 template_body=tmpl_data["template_body"],
-                variables=json.dumps(tmpl_data["variables"]),
+                variables=tmpl_data["variables"],
                 tags=tmpl_data["tags"],
                 is_builtin=True,
             )
@@ -1685,7 +1694,10 @@ def render_template(template_body: str, variables: dict) -> str:
         ValueError: If template rendering fails
     """
     try:
-        jinja_template = Template(template_body)
+        # SandboxedEnvironment: template bodies are user-supplied, so block
+        # access to Python internals (SSTI -> RCE via __class__/__mro__ etc.)
+        env = SandboxedEnvironment()
+        jinja_template = env.from_string(template_body)
         rendered = jinja_template.render(**variables)
         return rendered.strip()
     except UndefinedError as e:

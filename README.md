@@ -13,7 +13,7 @@ AI-powered network switch management
 ---
 
 <p align="center">
-  <img src="docs/assets/screenshot.png" alt="nethermind preview" width="90%">
+  <img src="docs/screenshots/01-dashboard.png" alt="nethermind preview" width="90%">
 </p>
 
 <br>
@@ -60,11 +60,16 @@ npm run dev
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `DATABASE_URL` | `sqlite:///nethermind.db` | Database connection string |
+| `DATABASE_URL` | `sqlite:///./switches.db` | Database connection string |
 | `OPENAI_API_KEY` | *(empty)* | OpenAI API key for Hermes AI |
-| `DEFAULT_SSH_USERNAME` | `admin` | Default SSH username for devices |
-| `DEFAULT_SSH_PASSWORD` | — | Default SSH password (use env in production) |
-| `SERIAL_BAUD_RATE` | `9600` | Default serial baud rate |
+| `OPENAI_MODEL` | `gpt-4o` | Model used by the Hermes agent |
+| `SSH_USERNAME` | `admin` | Default SSH username for devices |
+| `SSH_PASSWORD` | — | Default SSH password (use env in production) |
+| `SECRET_KEY` | `change-me` | App secret (change in production) |
+| `CORS_ORIGINS` | `http://localhost:3000,http://localhost:5173` | Allowed CORS origins |
+| `CLAB_DIR` | `/etc/containerlab/lab` | Containerlab topology directory |
+
+Backend variables live in `backend/.env.example`; the Docker Compose stack reads a root-level `.env` (see `.env.example` at the repo root).
 
 ## Architecture
 
@@ -104,22 +109,25 @@ Browser (Next.js) ──API──▶ FastAPI Backend ──▶ SQLAlchemy ──
 nethermind/
 ├── backend/
 │   ├── main.py              # FastAPI application
+│   ├── config.py            # Settings (env-driven)
+│   ├── database.py          # SQLAlchemy engine/session
+│   ├── schemas.py           # Pydantic request/response models
+│   ├── models/              # Database models
 │   ├── services/
-│   │   ├── netmiko_client.py    # SSH connection management
-│   │   ├── serial_client.py     # Serial console connections
-│   │   ├── jinja_engine.py      # Template rendering
-│   │   ├── hermes_agent.py      # AI chat assistant
-│   │   ├── workflow_engine.py   # IRIS-style workflows
-│   │   ├── containerlab.py      # Containerlab integration
-│   │   └── security_auditor.py  # CVE/compliance scanning
-│   ├── routers/              # API endpoint modules
-│   └── models/               # Database models
+│   │   ├── netmiko_client.py       # SSH connection management
+│   │   ├── serial_client.py        # Serial console connections
+│   │   ├── template_engine.py      # Jinja2 rendering + built-in templates
+│   │   ├── hermes_agent.py         # AI chat assistant
+│   │   ├── workflow_engine.py      # IRIS-style workflows
+│   │   ├── containerlab_service.py # Containerlab integration
+│   │   └── security_auditor.py     # CVE/compliance scanning
+│   └── routers/             # API endpoint modules
 ├── frontend/
-│   ├── src/app/              # Next.js pages
+│   ├── src/app/             # Next.js pages
 │   └── package.json
-├── templates/                # Jinja2 config templates
-├── docker-compose.yml        # Docker deployment
-└── .env.example              # Configuration template
+├── scripts/                 # CLI tool + start/setup scripts
+├── docker-compose.yml       # Docker deployment
+└── .env.example             # Compose environment template
 ```
 
 ## API Endpoints
@@ -127,12 +135,19 @@ nethermind/
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/api/switches` | GET/POST | Manage network switches |
-| `/api/switches/{id}/connect` | POST | Connect to a switch |
-| `/api/configs/{id}` | GET | Retrieve device configuration |
-| `/api/templates` | GET | List Jinja2 templates |
-| `/api/chat` | POST | Chat with Hermes AI agent |
+| `/api/switches/{id}/sync` | POST | Pull live config backup |
+| `/api/switches/{id}/health` | POST | Run live health check |
+| `/api/switches/{id}/commands` | POST | Execute read-only show commands |
+| `/api/configs` | GET | List config backups |
+| `/api/configs/diff` | POST | Diff two config backups |
+| `/api/templates` | GET/POST | Manage Jinja2 templates |
+| `/api/templates/render` | POST | Render a template with variables |
+| `/api/chat/stream` | POST | Chat with Hermes AI agent (SSE) |
 | `/api/workflows` | GET/POST | Manage configuration workflows |
-| `/api/security/audit` | POST | Run security audit on device |
+| `/api/security/audit/{id}` | POST | Run security audit on device |
+| `/api/containerlab/scan` | POST | Discover and import lab topologies |
+
+Interactive docs: `http://localhost:8000/docs`.
 
 ## Contributing
 
@@ -140,23 +155,9 @@ Contributions are welcome. Please see [CONTRIBUTING.md](CONTRIBUTING.md) for gui
 
 ## Security
 
-For security concerns, see [SECURITY.md](SECURITY.md). Please report vulnerabilities to **info@jorahone.com** — do not use public issues.
+Found a vulnerability? Please follow our [Security Policy](SECURITY.md) and report privately to `security@jorahone.com` — do not use public issues.
 
 ## License
-
-MIT © Jhonattan L. Jimenez
-
----
-
-## 🤝 Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md). All contributions follow the [Code of Conduct](CODE_OF_CONDUCT.md).
-
-## 🔒 Security
-
-Found a vulnerability? Please follow our [Security Policy](SECURITY.md) and report privately to `security@jorahone.com`.
-
-## 📄 License
 
 [MIT License](LICENSE) © Jhonattan L. Jimenez (OneByJorah)
 

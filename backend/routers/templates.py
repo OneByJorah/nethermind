@@ -55,7 +55,7 @@ def create_template(data: ConfigTemplateCreate, db: Session = Depends(get_db)):
         vendor=data.vendor,
         category=data.category,
         template_body=data.template_body,
-        variables=json.dumps(data.variables) if data.variables else None,
+        variables=data.variables,
         tags=data.tags,
         is_builtin=False,
     )
@@ -100,9 +100,12 @@ def update_template(template_id: int, data: ConfigTemplateUpdate, db: Session = 
         except ValueError as e:
             raise HTTPException(status_code=400, detail=f"Template syntax error: {e}")
 
-    # Serialize variables if provided
-    if "variables" in update_data and update_data["variables"] is not None:
-        update_data["variables"] = json.dumps(update_data["variables"])
+    # Normalize legacy double-encoded variables (stored as JSON strings)
+    if "variables" in update_data and isinstance(update_data["variables"], str):
+        try:
+            update_data["variables"] = json.loads(update_data["variables"])
+        except (ValueError, TypeError):
+            pass
 
     for key, value in update_data.items():
         setattr(tmpl, key, value)

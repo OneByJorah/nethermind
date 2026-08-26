@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from models import Workflow, WorkflowStep
-from schemas import WorkflowCreate, WorkflowOut, WorkflowStepOut
+from schemas import WorkflowCreate, WorkflowOut, WorkflowStepOut, WorkflowAdvanceRequest
 from services.workflow_engine import WorkflowEngine
 
 router = APIRouter(prefix="/api/workflows", tags=["workflows"])
@@ -43,9 +43,22 @@ def get_workflow(workflow_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/{workflow_id}/advance")
-def advance_workflow(workflow_id: int, approved: bool = False, result: str = None, db: Session = Depends(get_db)):
-    """Advance the workflow to the next step (with optional approval)."""
+def advance_workflow(
+    workflow_id: int,
+    data: WorkflowAdvanceRequest | None = None,
+    approved: bool = False,
+    result: str = None,
+    db: Session = Depends(get_db),
+):
+    """Advance the workflow to the next step (with optional approval).
+
+    Accepts either a JSON body {"approved": bool, "result": str} or
+    legacy query parameters.
+    """
     engine = WorkflowEngine(db)
+    if data is not None:
+        approved = data.approved
+        result = data.result
     result_data = engine.advance(workflow_id, approved=approved, result=result)
     if "error" in result_data:
         raise HTTPException(status_code=400, detail=result_data["error"])

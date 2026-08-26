@@ -130,6 +130,11 @@ class WorkflowCreate(BaseModel):
     ticket_ref: Optional[str] = None
 
 
+class WorkflowAdvanceRequest(BaseModel):
+    approved: bool = False
+    result: Optional[str] = None
+
+
 class WorkflowStepOut(BaseModel):
     id: int
     workflow_id: int

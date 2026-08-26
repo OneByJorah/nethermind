@@ -139,8 +139,17 @@ export default function ChatPage() {
   )
 }
 
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 function StreamingMessage({ content }: { content: string }) {
-  // Simple markdown-like rendering
+  // Simple markdown-like rendering (input is HTML-escaped first to prevent XSS)
   const parts = content.split(/(```[\s\S]*?```)/g)
   return (
     <>
@@ -149,8 +158,9 @@ function StreamingMessage({ content }: { content: string }) {
           const code = part.replace(/```\w*\n?/, '').replace(/```$/, '')
           return <pre key={i} className="my-2">{code}</pre>
         }
+        let html = escapeHtml(part)
         // Bold
-        let html = part.replace(/\*\*(.*?)\*\*/g, '<strong class="text-blue-300">$1</strong>')
+        html = html.replace(/\*\*(.*?)\*\*/g, '<strong class="text-blue-300">$1</strong>')
         // Inline code
         html = html.replace(/`([^`]+)`/g, '<code class="text-green-300 bg-slate-900 px-1 rounded">$1</code>')
         // Line breaks
