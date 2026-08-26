@@ -5,6 +5,8 @@
 ![License](https://img.shields.io/badge/license-MIT-brightgreen)
 ![Language](https://img.shields.io/badge/language-Python-blue)
 
+![Dashboard](docs/screenshots/dashboard.png)
+
 ---
 
 ## What it does
@@ -138,6 +140,24 @@ Copy `.env.example` to `.env` and configure:
 - **SSH passwords are encrypted at rest** in the database
 - **Audit trail is immutable** — all actions are logged
 - **Config diffs are tracked** — every change is versioned
+
+## Screenshots
+
+| Dashboard | Switches | Configs |
+|:---------:|:--------:|:-------:|
+| ![Dashboard](docs/screenshots/dashboard.png) | ![Switches](docs/screenshots/switches.png) | ![Configs](docs/screenshots/configs.png) |
+
+| Templates | Chat | Workflows |
+|:---------:|:----:|:---------:|
+| ![Templates](docs/screenshots/templates.png) | ![Chat](docs/screenshots/chat.png) | ![Workflows](docs/screenshots/workflows.png) |
+
+| Security | Topology | Metrics |
+|:--------:|:--------:|:-------:|
+| ![Security](docs/screenshots/security.png) | ![Topology](docs/screenshots/topology.png) | ![Metrics](docs/screenshots/metrics.png) |
+
+| Config Diff |
+|:-----------:|
+| ![Config Diff](docs/screenshots/config-diff.png) |
 
 ## Desktop App (Windows & Linux)
 
