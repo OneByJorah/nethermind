@@ -20,7 +20,7 @@ const navItems = [
   { label: 'Switches', href: '/switches', icon: Network },
   { label: 'Configs', href: '/configs', icon: FileText },
   { label: 'Templates', href: '/templates', icon: FileText },
-  { label: 'Hermes Chat', href: '/chat', icon: MessageSquare },
+  { label: 'Nethermind Chat', href: '/chat', icon: MessageSquare },
   { label: 'Workflows', href: '/workflows', icon: GitBranch },
   { label: 'Security', href: '/security', icon: Shield },
   { label: 'Topology', href: '/topology', icon: Map },
@@ -39,7 +39,7 @@ export function NavSidebar() {
             <Zap className="w-4 h-4 text-white" />
           </div>
           <div>
-            <h1 className="font-bold text-base text-white">Hermes</h1>
+            <h1 className="font-bold text-base text-white">Nethermind</h1>
             <p className="text-xs text-slate-400">Switch Manager</p>
           </div>
         </Link>
@@ -71,7 +71,7 @@ export function NavSidebar() {
       {/* Footer */}
       <div className="p-4 border-t border-slate-800">
         <p className="text-xs text-slate-500">
-          v1.0.0 &middot; Hermes AI
+          v1.0.0 &middot; Nethermind AI
         </p>
       </div>
     </aside>

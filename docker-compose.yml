@@ -5,7 +5,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: hermes-backend
+    container_name: nethermind-backend
     ports:
       - "8000:8000"
     environment:
@@ -16,11 +16,11 @@ services:
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://localhost:5173}
     volumes:
-      - hermes-data:/app/data
+      - nethermind-data:/app/data
       - ./backend:/app
     restart: unless-stopped
     networks:
-      - hermes-network
+      - nethermind-network
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=5)\""]
       interval: 30s
@@ -32,7 +32,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: hermes-frontend
+    container_name: nethermind-frontend
     ports:
       - "3000:3000"
     environment:
@@ -44,33 +44,33 @@ services:
       - backend
     restart: unless-stopped
     networks:
-      - hermes-network
+      - nethermind-network
     command: ["npm", "run", "dev"]
 
   # PostgreSQL (optional — uncomment for production)
   # postgres:
   #   image: postgres:16-alpine
-  #   container_name: hermes-postgres
+  #   container_name: nethermind-postgres
   #   environment:
-  #     POSTGRES_USER: hermes
+  #     POSTGRES_USER: nethermind
   #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
-  #     POSTGRES_DB: hermes
+  #     POSTGRES_DB: nethermind
   #   volumes:
   #     - postgres-data:/var/lib/postgresql/data
   #   ports:
   #     - "5432:5432"
   #   networks:
-  #     - hermes-network
+  #     - nethermind-network
   #   healthcheck:
-  #     test: ["CMD-SHELL", "pg_isready -U hermes"]
+  #     test: ["CMD-SHELL", "pg_isready -U nethermind"]
   #     interval: 10s
   #     timeout: 5s
   #     retries: 5
 
 volumes:
-  hermes-data:
+  nethermind-data:
   # postgres-data:
 
 networks:
-  hermes-network:
+  nethermind-network:
     driver: bridge

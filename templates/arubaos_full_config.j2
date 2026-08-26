@@ -1,0 +1,93 @@
+{#- ArubaOS-Switch / ProCurve standard config generator (VIDE VIDEaiCORE) -#}
+{#- Derived from field configs: default-procurve.txt, ABR.txt, Master DET-24Port 2930Template.txt -#}
+hostname "{{ hostname }}"
+time timezone {{ timezone | default(-240) }}
+{% if role == "access" and default_gateway %}
+ip default-gateway {{ default_gateway }}
+{% endif %}
+timesync sntp
+{% if snmpv3 %}
+snmpv3 enable
+snmpv3 only
+snmpv3 restricted-access
+snmpv3 user "swmonitor"
+snmpv3 group OperatorAuth user "swmonitor" sec-model ver3
+{% endif %}
+snmp-server community "public" operator unrestricted
+snmp-server community "netadmin" operator unrestricted
+{% if snmp_contact %}
+snmp-server contact "{{ snmp_contact }}"
+{% endif %}
+{% if radius_servers %}
+aaa authentication login privilege-mode
+aaa authentication console login radius local
+aaa authentication console enable radius local
+aaa authentication telnet login radius local
+aaa authentication telnet enable radius local
+aaa authentication web login radius local
+aaa authentication ssh login radius local
+aaa authentication ssh enable radius local
+{% for r in radius_servers %}
+radius-server host {{ r.host }} key "{{ r.key }}"
+{% endfor %}
+{% endif %}
+{% if role == "core" %}
+ip routing
+router ospf
+   area {{ ospf_area | default("0.0.0.1") }}
+   redistribute connected
+   nonstop
+   enable
+   exit
+{% endif %}
+{% for v in vlans %}
+vlan {{ v.id }}
+{% if v.name %}   name "{{ v.name }}"
+{% endif %}{% if v.untagged %}   untagged {{ v.untagged }}
+{% endif %}{% if v.tagged %}   tagged {{ v.tagged }}
+{% endif %}{% if v.ip and v.mask %}   ip address {{ v.ip }} {{ v.mask }}
+{% endif %}{% if v.helper %}   ip helper-address {{ v.helper }}
+{% endif %}{% if v.ip and role == "core" %}   ip ospf {{ v.ip }} passive
+   ip ospf {{ v.ip }} area {{ ospf_area | default("0.0.0.1") }}
+{% endif %}{% if v.name == "VOIP" %}   qos dscp 101110
+{% endif %}   exit
+{% endfor %}
+{% if role == "access" %}
+no stack
+{% endif %}
+{% if access_ports %}
+port-security {{ access_ports }} learn-mode limited-continuous address-limit 3
+{% endif %}
+dhcp-snooping
+{% for s in dhcp_authorized_servers %}
+dhcp-snooping authorized-server {{ s }}
+{% endfor %}
+{% if dhcp_option82 %}
+dhcp-snooping option 82
+{% else %}
+no dhcp-snooping option 82
+{% endif %}
+{% if trust_ports %}
+dhcp-snooping trust {{ trust_ports }}
+{% endif %}
+sntp unicast
+{% for s in sntp_servers %}
+sntp server{% if loop.index == 1 %} priority 1{% elif loop.index == 2 %} priority 2{% endif %} {{ s }}
+{% endfor %}
+{% if role == "core" %}
+sflow 1 destination {{ sflow_dest }} {{ sflow_port | default(2055) }}
+sflow 1 polling {{ sflow_ports }} 20
+sflow 1 sampling {{ sflow_ports }} 50
+{% endif %}
+{% if access_ports %}
+spanning-tree {{ access_ports }} bpdu-protection
+{% endif %}
+{% if role == "core" and backbone_vlan %}
+interface {{ backbone_port }}
+   dhcp-snooping trust
+   exit
+{% endif %}
+arp-protect trust {{ trust_ports }}
+loop-protect {{ access_ports }}
+write mem
+exit

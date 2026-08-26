@@ -17,8 +17,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Create non-root user
-RUN useradd -m -u 1000 hermes && chown -R hermes:hermes /app
-USER hermes
+RUN useradd -m -u 1000 nethermind && chown -R nethermind:nethermind /app
+USER nethermind
 
 EXPOSE 8000
 

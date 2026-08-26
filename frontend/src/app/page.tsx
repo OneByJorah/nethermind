@@ -143,7 +143,7 @@ export default function DashboardPage() {
             Quick Actions
           </h2>
           <QuickAction href="/switches" label="Add Switch" description="Register a new network device" icon={<Network className="w-4 h-4" />} />
-          <QuickAction href="/chat" label="Chat with Hermes" description="Ask AI about your network" icon={<Activity className="w-4 h-4" />} />
+          <QuickAction href="/chat" label="Chat with Nethermind" description="Ask AI about your network" icon={<Activity className="w-4 h-4" />} />
           <QuickAction href="/security" label="Run Audit" description="Scan for security issues" icon={<Shield className="w-4 h-4" />} />
           <QuickAction href="/workflows" label="New Workflow" description="Start a change workflow" icon={<GitBranch className="w-4 h-4" />} />
         </div>

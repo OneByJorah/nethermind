@@ -1,4 +1,4 @@
-"""Centralized configuration for Hermes Switch Manager.
+"""Centralized configuration for Nethermind.
 
 Loads settings from environment variables (via .env file or system env).
 """
@@ -9,7 +9,7 @@ from typing import Optional
 
 class Settings(BaseSettings):
     # App
-    APP_NAME: str = "Hermes Switch Manager"
+    APP_NAME: str = "Nethermind"
     VERSION: str = "1.0.0"
     DEBUG: bool = False
     LOG_LEVEL: str = "INFO"

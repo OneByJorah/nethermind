@@ -1,1 +1,1 @@
-# Hermes Switch Manager — Services Package
+# Nethermind — Services Package

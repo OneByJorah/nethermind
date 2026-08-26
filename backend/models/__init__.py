@@ -1,4 +1,4 @@
-"""SQLAlchemy models for Hermes Switch Manager.
+"""SQLAlchemy models for Nethermind.
 
 Models: Switch, ConfigBackup, ChatMessage, Workflow, WorkflowStep,
         AuditLog, SecurityFinding, ContainerlabTopology, DeviceMetric.
@@ -68,7 +68,7 @@ class ConfigDiff(Base):
 
 
 class ChatMessage(Base):
-    """Chat history for Hermes AI agent sessions."""
+    """Chat history for Nethermind AI agent sessions."""
     __tablename__ = "chat_messages"
 
     id = Column(Integer, primary_key=True)

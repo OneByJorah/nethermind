@@ -9,7 +9,7 @@
 │  :3000       │     │  Routers → Services → Database             │
 └─────────────┘     │                                              │
                     │  ┌─────────────────┐  ┌──────────────────┐  │
-                    │  │ Hermes AI Agent │  │ Workflow Engine  │  │
+                    │  │ Nethermind AI Agent │  │ Workflow Engine  │  │
                     │  │ (OpenAI + Tools)│  │ (IRIS-style)     │  │
                     │  └────────┬────────┘  └────────┬─────────┘  │
                     │           │                     │            │

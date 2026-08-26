@@ -4,7 +4,7 @@ import { NavSidebar } from '@/components/NavSidebar'
 import { Toaster } from 'react-hot-toast'
 
 export const metadata: Metadata = {
-  title: 'Hermes Switch Manager',
+  title: 'Nethermind',
   description: 'AI-powered network switch configuration management',
 }
 

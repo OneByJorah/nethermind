@@ -1,8 +1,8 @@
-"""Hermes Switch Manager — FastAPI Application.
+"""Nethermind — FastAPI Application.
 
 AI-powered network switch configuration management with:
 - Multi-vendor SSH config backup
-- AI chat assistant (Hermes agent) with tool calling
+- AI chat assistant (Nethermind agent) with tool calling
 - IRIS-style workflow engine
 - Containerlab topology integration
 - Security auditing (CVE, ACL, AAA, compliance)
@@ -18,7 +18,7 @@ from dotenv import load_dotenv
 
 from config import settings
 from database import init_db
-from routers import switches, configs, chat, workflows, dashboard, security, containerlab, templates, discovery
+from routers import switches, configs, chat, workflows, dashboard, security, containerlab, templates, discovery, config_parser_router
 from services.template_engine import seed_builtin_templates
 
 # Load environment variables
@@ -72,6 +72,7 @@ app.include_router(security.router)
 app.include_router(containerlab.router)
 app.include_router(templates.router)
 app.include_router(discovery.router)
+app.include_router(config_parser_router.router)
 
 
 @app.get("/health")
@@ -94,7 +95,7 @@ def root():
         "features": [
             "Switch Management",
             "Config Backup & Diff",
-            "Hermes AI Chat Assistant",
+            "Nethermind AI Chat",
             "Workflow Engine",
             "Security Auditing",
             "Containerlab Integration",
