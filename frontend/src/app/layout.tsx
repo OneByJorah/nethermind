@@ -4,8 +4,8 @@ import { NavSidebar } from '@/components/NavSidebar'
 import { Toaster } from 'react-hot-toast'
 
 export const metadata: Metadata = {
-  title: 'Nethermind',
-  description: 'AI-powered network switch configuration management',
+  title: 'Nethermind — Network Intelligence',
+  description: 'AI-powered network switch configuration management — multi-vendor SSH + serial, Jinja2 templates, AI agent, and security auditing.',
 }
 
 export default function RootLayout({
@@ -15,25 +15,33 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body>
-        <div className="flex h-screen overflow-hidden">
+      <body className="antialiased">
+        <div className="ambient-bg" />
+        <div className="flex h-screen overflow-hidden relative z-10">
           <NavSidebar />
-          <main className="flex-1 overflow-y-auto p-6 lg:p-8">
-            {children}
+          <main className="flex-1 overflow-y-auto">
+            <div className="p-6 lg:p-8 max-w-[1600px] mx-auto">
+              {children}
+            </div>
           </main>
         </div>
         <Toaster
           position="bottom-right"
           toastOptions={{
+            duration: 4000,
             style: {
-              background: '#1e293b',
+              background: 'rgba(15, 20, 34, 0.95)',
+              backdropFilter: 'blur(20px)',
               color: '#f1f5f9',
-              border: '1px solid #334155',
-              borderRadius: '12px',
-              fontSize: '0.875rem',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: '14px',
+              fontSize: '0.8125rem',
+              fontWeight: 500,
+              padding: '0.75rem 1rem',
+              boxShadow: '0 16px 48px rgba(0,0,0,0.4)',
             },
-            success: { iconTheme: { primary: '#22c55e', secondary: '#1e293b' } },
-            error: { iconTheme: { primary: '#ef4444', secondary: '#1e293b' } },
+            success: { iconTheme: { primary: '#10b981', secondary: 'rgba(15,20,34,0.95)' } },
+            error: { iconTheme: { primary: '#ef4444', secondary: 'rgba(15,20,34,0.95)' } },
           }}
         />
       </body>

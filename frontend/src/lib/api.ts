@@ -314,6 +314,29 @@ export const templatesApi = {
   seed: () => request<{ message: string }>('/api/templates/seed', { method: 'POST' }),
 };
 
+// ─── Config Parser ───
+
+export const configParserApi = {
+  parse: (text: string) =>
+    request<any>('/api/config/parse', { method: 'POST', body: JSON.stringify({ config_text: text }) }),
+  upload: (file: File, autoCreate = false) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('auto_create', String(autoCreate));
+    return request<any>('/api/config/upload', { method: 'POST', body: formData, headers: {} });
+  },
+  validate: (configText: string, vendor = 'cisco_ios') =>
+    request<any>('/api/config/validate', { method: 'POST', body: JSON.stringify({ config_text: configText, vendor }) }),
+  render: (templateId: number, variables: Record<string, string> = {}) =>
+    request<any>('/api/config/render', { method: 'POST', body: JSON.stringify({ template_id: templateId, variables }) }),
+  deploy: (switchId: number, configText: string, transport = 'ssh') =>
+    request<any>('/api/config/deploy', { method: 'POST', body: JSON.stringify({ switch_id: switchId, config_text: configText, transport }) }),
+  backup: (data: { transport: string; host: string; port: number; username: string; password: string; save_to_db?: boolean }) =>
+    request<any>('/api/config/backup', { method: 'POST', body: JSON.stringify(data) }),
+  backupById: (switchId: number, connectionType: string) =>
+    request<any>(`/api/switches/${switchId}/backup`, { method: 'POST', body: JSON.stringify({ connection_type: connectionType }) }),
+};
+
 // ─── SSE Stream (for chat) ───
 // Uses fetch with streaming since SSE POST requires a custom approach
 

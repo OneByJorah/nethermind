@@ -139,6 +139,63 @@ Copy `.env.example` to `.env` and configure:
 - **Audit trail is immutable** — all actions are logged
 - **Config diffs are tracked** — every change is versioned
 
+## Desktop App (Windows & Linux)
+
+Nethermind includes an Electron-based desktop application that bundles both the backend and frontend into a single installable package.
+
+### Pre-built Installers
+
+Download the latest release from the `desktop/dist/` directory:
+
+| Platform | File | Size |
+|----------|------|------|
+| **Windows (x64)** | `Nethermind-1.0.0-win-x64.exe` | ~78 MB |
+| **Linux (AppImage)** | `Nethermind-1.0.0-linux-x64.AppImage` | ~80 MB |
+| **Linux (Debian/Ubuntu)** | `Nethermind-1.0.0-linux-x64.deb` | ~75 MB |
+| **Linux (Fedora/RHEL)** | `Nethermind-1.0.0-linux-x64.rpm` | ~75 MB |
+
+### Building Desktop Packages
+
+**Prerequisites:** Python 3.11+, Node.js 18+, npm
+
+**Windows:**
+```bash
+cd desktop
+npm install
+cd ../frontend && npm run build && cd ..
+cd desktop
+npx electron-builder --win --x64
+# Output: desktop/dist/Nethermind-1.0.0-win-x64.exe
+```
+
+**Linux (build on Linux or WSL):**
+```bash
+cd desktop
+npm install
+cd ../frontend && npm run build && cd ..
+cd desktop
+npx electron-builder --linux --x64
+# Output: desktop/dist/Nethermind-1.0.0-linux-x64.*
+```
+
+### Running from Source (Desktop Mode)
+
+```bash
+cd desktop
+npm install
+npx electron .
+```
+
+This starts both the backend (port 8000) and frontend (port 3000) automatically, then opens the desktop window.
+
+### Build Scripts
+
+Convenience scripts are provided:
+
+- **Windows:** `desktop\build-win.bat` — builds the Windows NSIS installer
+- **Linux:** `desktop/build-linux.sh` — builds AppImage, deb, and rpm packages
+- **Start (dev):** `desktop\start.bat` or `desktop/start.sh` — runs from source
+
 ## License
 
 MIT License — see [LICENSE](LICENSE) for details.

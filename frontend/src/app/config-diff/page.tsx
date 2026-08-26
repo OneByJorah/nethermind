@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { GitCompare, Upload, ArrowLeftRight, Copy, Trash2, Download } from 'lucide-react'
+import { GitCompare, Upload, ArrowLeftRight, Copy, Trash2, Download, Plus, Minus, Equal } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 interface DiffLine {
@@ -78,7 +78,7 @@ export default function ConfigDiffPage() {
       (l.type === 'added' ? '+ ' : l.type === 'removed' ? '- ' : '  ') + l.content
     ).join('\n')
     navigator.clipboard.writeText(text)
-    toast.success('Diff copied')
+    toast.success('Diff copied to clipboard')
   }
 
   const handleDownloadDiff = () => {
@@ -110,11 +110,12 @@ export default function ConfigDiffPage() {
   const unchanged = diffLines.filter(l => l.type === 'same').length
 
   return (
-    <div className="space-y-6 fade-in">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 animate-fade-in">
+      {/* Header */}
+      <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Config Diff</h1>
-          <p className="text-slate-400 mt-1">Compare two configurations side-by-side</p>
+          <h1 className="text-2xl font-bold text-white tracking-tight">Config Diff</h1>
+          <p className="text-sm text-slate-500 mt-1">Compare two configurations side-by-side</p>
         </div>
         {showDiff && (
           <div className="flex gap-2">
@@ -132,58 +133,77 @@ export default function ConfigDiffPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="card">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold text-slate-300">Older Config</h2>
-              <label className="btn btn-secondary btn-sm cursor-pointer">
+              <h2 className="text-sm font-semibold text-white flex items-center gap-2">
+                <div className="w-6 h-6 rounded-md bg-red-500/10 flex items-center justify-center">
+                  <Minus className="w-3 h-3 text-red-400" />
+                </div>
+                Older Config
+              </h2>
+              <label className="btn btn-ghost btn-xs cursor-pointer">
                 <Upload className="w-3.5 h-3.5" /> Upload
                 <input type="file" className="hidden" accept=".txt,.cfg,.conf"
                   onChange={e => e.target.files?.[0] && handleFileUpload('old', e.target.files[0])} />
               </label>
             </div>
-            <textarea value={oldConfig} onChange={e => setOldConfig(e.target.value)}
+            <textarea value={oldConfig} onChange={e => { setOldConfig(e.target.value); setShowDiff(false) }}
               placeholder="Paste the older config here, or upload a .txt file..."
-              className="w-full h-96 bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm font-mono text-slate-300 resize-none focus:outline-none focus:border-blue-500" />
+              className="w-full h-96 bg-surface-0 border border-white/[0.06] rounded-xl p-4 text-sm font-mono text-slate-300 resize-none focus:outline-none focus:border-nm-500/50 focus:ring-1 focus:ring-nm-500/20 transition-all placeholder:text-slate-600" />
           </div>
           <div className="card">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold text-slate-300">Newer Config</h2>
-              <label className="btn btn-secondary btn-sm cursor-pointer">
+              <h2 className="text-sm font-semibold text-white flex items-center gap-2">
+                <div className="w-6 h-6 rounded-md bg-green-500/10 flex items-center justify-center">
+                  <Plus className="w-3 h-3 text-green-400" />
+                </div>
+                Newer Config
+              </h2>
+              <label className="btn btn-ghost btn-xs cursor-pointer">
                 <Upload className="w-3.5 h-3.5" /> Upload
                 <input type="file" className="hidden" accept=".txt,.cfg,.conf"
                   onChange={e => e.target.files?.[0] && handleFileUpload('new', e.target.files[0])} />
               </label>
             </div>
-            <textarea value={newConfig} onChange={e => setNewConfig(e.target.value)}
+            <textarea value={newConfig} onChange={e => { setNewConfig(e.target.value); setShowDiff(false) }}
               placeholder="Paste the newer config here, or upload a .txt file..."
-              className="w-full h-96 bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm font-mono text-slate-300 resize-none focus:outline-none focus:border-blue-500" />
+              className="w-full h-96 bg-surface-0 border border-white/[0.06] rounded-xl p-4 text-sm font-mono text-slate-300 resize-none focus:outline-none focus:border-nm-500/50 focus:ring-1 focus:ring-nm-500/20 transition-all placeholder:text-slate-600" />
           </div>
         </div>
       ) : (
         <div className="card">
+          {/* Diff Stats */}
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-4 text-sm">
-              <span className="text-green-400">+{additions} additions</span>
-              <span className="text-red-400">-{deletions} deletions</span>
-              <span className="text-slate-500">{unchanged} unchanged</span>
+            <div className="flex items-center gap-4">
+              <span className="flex items-center gap-1.5 text-xs font-semibold text-green-400 bg-green-500/10 px-2.5 py-1 rounded-lg border border-green-500/20">
+                <Plus className="w-3 h-3" /> {additions} additions
+              </span>
+              <span className="flex items-center gap-1.5 text-xs font-semibold text-red-400 bg-red-500/10 px-2.5 py-1 rounded-lg border border-red-500/20">
+                <Minus className="w-3 h-3" /> {deletions} deletions
+              </span>
+              <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 bg-white/[0.04] px-2.5 py-1 rounded-lg border border-white/[0.06]">
+                <Equal className="w-3 h-3" /> {unchanged} unchanged
+              </span>
             </div>
-            <button onClick={() => setShowDiff(false)} className="btn btn-secondary btn-sm">
+            <button onClick={() => setShowDiff(false)} className="btn btn-ghost btn-sm">
               <ArrowLeftRight className="w-3.5 h-3.5" /> Edit
             </button>
           </div>
-          <div className="overflow-auto max-h-[600px]">
+
+          {/* Diff Content */}
+          <div className="overflow-auto max-h-[600px] rounded-xl border border-white/[0.06]">
             <pre className="text-sm font-mono leading-relaxed">
               {diffLines.map((line, i) => (
-                <div key={i} className={`px-3 ${
-                  line.type === 'added' ? 'bg-green-500/10 text-green-400' :
-                  line.type === 'removed' ? 'bg-red-500/10 text-red-400' :
-                  'text-slate-400'
+                <div key={i} className={`px-4 py-0.5 ${
+                  line.type === 'added' ? 'bg-green-500/[0.08] text-green-400' :
+                  line.type === 'removed' ? 'bg-red-500/[0.08] text-red-400' :
+                  'text-slate-500'
                 }`}>
-                  <span className="inline-block w-8 text-right text-slate-600 mr-3 select-none">
+                  <span className="inline-block w-10 text-right text-slate-700 mr-3 select-none text-[11px]">
                     {line.oldLineNum || ''}
                   </span>
-                  <span className="inline-block w-8 text-right text-slate-600 mr-3 select-none">
+                  <span className="inline-block w-10 text-right text-slate-700 mr-3 select-none text-[11px]">
                     {line.newLineNum || ''}
                   </span>
-                  <span className="mr-2 select-none">
+                  <span className="inline-block w-4 text-center mr-2 select-none text-[11px] font-bold">
                     {line.type === 'added' ? '+' : line.type === 'removed' ? '-' : ' '}
                   </span>
                   {line.content}
@@ -194,6 +214,7 @@ export default function ConfigDiffPage() {
         </div>
       )}
 
+      {/* Action Buttons */}
       <div className="flex justify-center gap-3">
         {!showDiff && (
           <button onClick={handleCompare} className="btn btn-primary">
